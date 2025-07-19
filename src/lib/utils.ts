@@ -1,4 +1,6 @@
-
+export function cn(...classes: (string | undefined | null | false)[]) {
+  return classes.filter(Boolean).join(" ");
+}
 import { format, parseISO } from "date-fns";
 import liburNasional from "../data/libur.json"; // pastikan file ini ada
 
