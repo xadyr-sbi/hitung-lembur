@@ -18,34 +18,23 @@ interface OvertimeData {
   [key: string]: OvertimeDay
 }
 
-// Pastikan format tanpa nol di depan (misal: '2025-7-17')
+// Libur nasional format tanpa nol di depan
 const nationalHolidays2025 = [
-  '2025-1-1',  // Tahun Baru Masehi
-  '2025-1-29', // Isra Miraj
-  '2025-3-31', // Nyepi
-  '2025-4-18', // Wafat Isa Almasih
-  '2025-5-1',  // Hari Buruh
-  '2025-5-29', // Kenaikan Isa Almasih
-  '2025-6-1',  // Hari Lahir Pancasila
-  '2025-6-6',  // Idul Adha
-  '2025-6-30', // Tahun Baru Islam
-  '2025-7-17', // Maulid Nabi Muhammad
-  '2025-8-17', // Hari Kemerdekaan
-  '2025-10-6', // Isra Miraj
-  '2025-12-25' // Natal
+  '2025-1-1','2025-1-29','2025-3-31','2025-4-18','2025-5-1','2025-5-29','2025-6-1','2025-6-6',
+  '2025-6-30','2025-7-17','2025-8-17','2025-10-6','2025-12-25'
 ]
 
 export default function OvertimeCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [basicSalary, setBasicSalary] = useState<number>(2436886)
-  const [workExperience, setWorkExperience] = useState<number>(0)
+  const [basicSalary, setBasicSalary] = useState(2436886)
+  const [workExperience, setWorkExperience] = useState(0)
   const [overtimeData, setOvertimeData] = useState<OvertimeData>({})
   const [selectedDate, setSelectedDate] = useState<number | null>(null)
-  const [overtimeHours, setOvertimeHours] = useState<string>('')
-  const [isHoliday, setIsHoliday] = useState<boolean>(false)
+  const [overtimeHours, setOvertimeHours] = useState('')
+  const [isHoliday, setIsHoliday] = useState(false)
   const [today, setToday] = useState(new Date())
 
-  // Pastikan setiap buka selalu bulan hari ini
+  // Selalu buka bulan hari ini
   useEffect(() => {
     const now = new Date()
     setCurrentDate(now)
@@ -56,7 +45,6 @@ export default function OvertimeCalendar() {
     const savedOvertimeData = localStorage.getItem('overtimeData')
     const savedBasicSalary = localStorage.getItem('basicSalary')
     const savedWorkExperience = localStorage.getItem('workExperience')
-
     if (savedOvertimeData) setOvertimeData(JSON.parse(savedOvertimeData))
     if (savedBasicSalary) setBasicSalary(Number(savedBasicSalary))
     if (savedWorkExperience) setWorkExperience(Number(savedWorkExperience))
@@ -65,36 +53,30 @@ export default function OvertimeCalendar() {
   useEffect(() => {
     localStorage.setItem('overtimeData', JSON.stringify(overtimeData))
   }, [overtimeData])
-
   useEffect(() => {
     localStorage.setItem('basicSalary', basicSalary.toString())
   }, [basicSalary])
-
   useEffect(() => {
     localStorage.setItem('workExperience', workExperience.toString())
   }, [workExperience])
 
-  const months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']
-  const dayNames = ['Mgg', 'Snin', 'Slsa', 'Rbu', 'Kmis', 'Jmat', 'Sbtu']
+  const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER']
+  const dayNames = ['Mgg','Snin','Slsa','Rbu','Kmis','Jmat','Sbtu']
 
   const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
   const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay()
 
-  // Untuk pad tanggal jadi format seperti '2025-07-06'
-  const pad = (n: number) => n < 10 ? n.toString() : n.toString() // array tanpa nol di depan, jadi tidak perlu pad sebenarnya
-
-  // Pengecekan libur nasional
+  // Cek libur nasional
   const isNationalHoliday = (year: number, month: number, date: number) => {
     return nationalHolidays2025.includes(`${year}-${month + 1}-${date}`)
   }
 
-  const calculateWorkExperienceAllowance = (years: number): number => years > 0 ? 5000 + ((years - 1) * 10000) : 0
+  const calculateWorkExperienceAllowance = (years: number) => years > 0 ? 5000 + ((years - 1) * 10000) : 0
 
   const calculateOvertimePay = (hours: number, isHoliday: boolean, base: number, exp: number) => {
     const allowance = calculateWorkExperienceAllowance(exp)
     const totalBasic = base + allowance
     const hourlyRate = totalBasic / 173
-
     if (isHoliday) {
       if (hours <= 7) return hours * hourlyRate * 2
       else if (hours === 8) return (7 * hourlyRate * 2) + (hourlyRate * 3)
@@ -138,13 +120,11 @@ export default function OvertimeCalendar() {
     if (selectedDate !== null && overtimeHours) {
       const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${selectedDate}`
       const hours = parseFloat(overtimeHours)
-
       if (hours > 0) {
         setOvertimeData(prev => ({ ...prev, [key]: { date: selectedDate, hours, isHoliday } }))
       } else {
         setOvertimeData(prev => { const newData = { ...prev }; delete newData[key]; return newData })
       }
-
       setSelectedDate(null)
       setOvertimeHours('')
       setIsHoliday(false)
@@ -173,19 +153,18 @@ export default function OvertimeCalendar() {
     })
   }
 
-  // HEADER HARI: hanya Minggu merah, lain hitam
-  // Sabtu index ke-6 akan hitam karena condition hanya index===0
-  // --------------------
-  // TANGGAL KALENDER: Minggu & Libur Nasional angka merah
-  // --------------------
-  // Hari ini diberi lingkaran (border biru)
+  // ClassName helper agar tidak error di Vercel/TypeScript
+  const makeClassName = (...args: (string | false | null | undefined)[]) =>
+    args.filter(Boolean).join(" ")
 
+  // Render kalender hari
   const renderCalendarDays = () => {
     const days = []
     const daysInMonth = getDaysInMonth(currentDate)
     const firstDay = getFirstDayOfMonth(currentDate)
 
-    for (let i = 0; i < firstDay; i++) days.push(<div key={`empty-${i}`} className="h-16 border"></div>)
+    for (let i = 0; i < firstDay; i++)
+      days.push(<div key={`empty-${i}`} className="h-16 border"></div>)
 
     for (let date = 1; date <= daysInMonth; date++) {
       const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${date}`
@@ -203,11 +182,22 @@ export default function OvertimeCalendar() {
         <div
           key={date}
           onClick={() => handleDateClick(date)}
-          className={`h-16 border cursor-pointer flex items-center justify-center relative text-sm font-medium
-            ${overtimeDay ? (overtimeDay.isHoliday ? 'bg-red-500 text-white' : 'bg-yellow-400') : 'bg-green-200'}
-            ${selectedDate === date ? 'ring-2 ring-blue-500' : ''}`}
+          className={makeClassName(
+            "h-16 border cursor-pointer flex items-center justify-center relative text-sm font-medium",
+            overtimeDay
+              ? (overtimeDay.isHoliday
+                  ? "bg-red-500 text-white"
+                  : "bg-yellow-400")
+              : "bg-green-200",
+            selectedDate === date && "ring-2 ring-blue-500"
+          )}
         >
-          <span className={`z-10 ${isRed ? 'text-red-600 font-bold' : 'text-black'} ${isToday ? 'border-2 border-blue-500 rounded-full px-2' : ''}`}>{date}</span>
+          <span className={makeClassName(
+            "z-10",
+            isRed && "text-red-600 font-bold",
+            !isRed && "text-black",
+            isToday && "border border-blue-500 rounded-full px-2"
+          )}>{date}</span>
           {overtimeDay && (
             <div className="absolute bottom-1 right-1 text-xs">
               {overtimeDay.hours}h
@@ -237,7 +227,11 @@ export default function OvertimeCalendar() {
         {dayNames.map((day, index) => (
           <div
             key={day}
-            className={`p-3 text-center font-bold border ${index === 0 ? 'text-red-600' : 'text-black'}`}
+            className={makeClassName(
+              "p-3 text-center font-bold border",
+              index === 0 && "text-red-600",
+              index !== 0 && "text-black"
+            )}
           >{day}</div>
         ))}
       </div>
