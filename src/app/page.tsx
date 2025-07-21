@@ -18,6 +18,7 @@ interface OvertimeData {
   [key: string]: OvertimeDay
 }
 
+// Pastikan format tanpa nol di depan (misal: '2025-7-17')
 const nationalHolidays2025 = [
   '2025-1-1',  // Tahun Baru Masehi
   '2025-1-29', // Isra Miraj
@@ -44,6 +45,7 @@ export default function OvertimeCalendar() {
   const [isHoliday, setIsHoliday] = useState<boolean>(false)
   const [today, setToday] = useState(new Date())
 
+  // Pastikan setiap buka selalu bulan hari ini
   useEffect(() => {
     const now = new Date()
     setCurrentDate(now)
@@ -78,6 +80,10 @@ export default function OvertimeCalendar() {
   const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
   const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay()
 
+  // Untuk pad tanggal jadi format seperti '2025-07-06'
+  const pad = (n: number) => n < 10 ? n.toString() : n.toString() // array tanpa nol di depan, jadi tidak perlu pad sebenarnya
+
+  // Pengecekan libur nasional
   const isNationalHoliday = (year: number, month: number, date: number) => {
     return nationalHolidays2025.includes(`${year}-${month + 1}-${date}`)
   }
@@ -167,6 +173,13 @@ export default function OvertimeCalendar() {
     })
   }
 
+  // HEADER HARI: hanya Minggu merah, lain hitam
+  // Sabtu index ke-6 akan hitam karena condition hanya index===0
+  // --------------------
+  // TANGGAL KALENDER: Minggu & Libur Nasional angka merah
+  // --------------------
+  // Hari ini diberi lingkaran (border biru)
+
   const renderCalendarDays = () => {
     const days = []
     const daysInMonth = getDaysInMonth(currentDate)
@@ -177,9 +190,14 @@ export default function OvertimeCalendar() {
     for (let date = 1; date <= daysInMonth; date++) {
       const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${date}`
       const overtimeDay = overtimeData[key]
-      const isSunday = (firstDay + date - 1) % 7 === 0
-      const isRed = isSunday || isNationalHoliday(currentDate.getFullYear(), currentDate.getMonth(), date)
-      const isToday = currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth() && date === today.getDate()
+      const dayOfWeek = new Date(currentDate.getFullYear(), currentDate.getMonth(), date).getDay()
+      const isSunday = dayOfWeek === 0
+      const isNational = isNationalHoliday(currentDate.getFullYear(), currentDate.getMonth(), date)
+      const isRed = isSunday || isNational
+      const isToday =
+        currentDate.getFullYear() === today.getFullYear() &&
+        currentDate.getMonth() === today.getMonth() &&
+        date === today.getDate()
 
       days.push(
         <div
@@ -189,7 +207,7 @@ export default function OvertimeCalendar() {
             ${overtimeDay ? (overtimeDay.isHoliday ? 'bg-red-500 text-white' : 'bg-yellow-400') : 'bg-green-200'}
             ${selectedDate === date ? 'ring-2 ring-blue-500' : ''}`}
         >
-          <span className={`z-10 ${isRed ? 'text-red-600 font-bold' : 'text-black'} ${isToday ? 'border border-blue-500 rounded-full px-2' : ''}`}>{date}</span>
+          <span className={`z-10 ${isRed ? 'text-red-600 font-bold' : 'text-black'} ${isToday ? 'border-2 border-blue-500 rounded-full px-2' : ''}`}>{date}</span>
           {overtimeDay && (
             <div className="absolute bottom-1 right-1 text-xs">
               {overtimeDay.hours}h
@@ -214,15 +232,17 @@ export default function OvertimeCalendar() {
         <Button onClick={exportData}>Export PDF</Button>
       </div>
 
+      {/* HEADER HARI */}
       <div className="grid grid-cols-7 bg-yellow-100">
         {dayNames.map((day, index) => (
           <div
             key={day}
-            className={`p-3 text-center font-bold border ${index === 0 ? 'text-red-600' : 'text-black'}
+            className={`p-3 text-center font-bold border ${index === 0 ? 'text-red-600' : 'text-black'}`}
           >{day}</div>
         ))}
       </div>
 
+      {/* GRID KALENDER */}
       <div id="export-area" className="grid grid-cols-7">
         {renderCalendarDays()}
       </div>
