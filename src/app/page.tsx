@@ -218,7 +218,7 @@ export default function OvertimeCalendar() {
         {dayNames.map((day, index) => (
           <div
             key={day}
-            className={`p-3 text-center font-bold border ${index === 0 ? 'text-red-600' : 'text-black'}`}
+            className={`p-3 text-center font-bold border ${index === 0 ? 'text-red-600' : 'text-black'}
           >{day}</div>
         ))}
       </div>
