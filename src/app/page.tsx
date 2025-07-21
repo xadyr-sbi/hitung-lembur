@@ -362,7 +362,7 @@ export default function OvertimeCalendar() {
                 <div
                   key={day}
                   className={`p-3 text-center font-bold border border-gray-300 ${
-                    index === 0 || index === 6 ? 'text-red-600' : 'text-black'
+                    index === 0 ? 'text-red-600' : 'text-black'
                   }`}
                 >
                   {day}
