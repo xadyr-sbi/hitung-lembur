@@ -158,7 +158,7 @@ export default function OvertimeCalendar() {
       const dayOfWeek = new Date(currentDate.getFullYear(), currentDate.getMonth(), date).getDay()
       const isSunday = dayOfWeek === 0
       const isNational = isNationalHoliday(currentDate.getFullYear(), currentDate.getMonth(), date)
-      const isRed = isSunday || isNational
+      const isHolidayCell = isSunday || isNational
       const isToday =
         currentDate.getFullYear() === today.getFullYear() &&
         currentDate.getMonth() === today.getMonth() &&
@@ -171,20 +171,19 @@ export default function OvertimeCalendar() {
           className={makeClassName(
             "h-16 border cursor-pointer flex items-center justify-center relative text-sm font-medium",
             overtimeDay
-              ? (overtimeDay.isHoliday
-                  ? "bg-red-500 text-white"
-                  : "bg-yellow-400")
-              : isRed
-                ? "bg-red-500 text-white"
-                : "bg-green-200",
+              ? overtimeDay.isHoliday ? "bg-red-500 text-white" : "bg-yellow-400"
+              : isHolidayCell ? "bg-red-500 text-white" : "bg-green-200",
             selectedDate === date && "ring-2 ring-blue-500"
           )}
         >
           <span className={makeClassName(
             "z-10",
-            (overtimeDay?.isHoliday || isRed) ? "text-white" : "text-black",
-            isToday && "border-2 border-blue-500 rounded-full px-2 py-1"
-          )}>{date}</span>
+            isToday && "border-2 border-blue-500 rounded-full px-2 py-1",
+            // Warna teks: jika background merah, teks putih, selain itu hitam
+            (overtimeDay?.isHoliday || isHolidayCell) ? "text-white" : "text-black"
+          )}>
+            {date}
+          </span>
           {overtimeDay && (
             <div className="absolute bottom-1 right-1 text-xs">
               {overtimeDay.hours}h
