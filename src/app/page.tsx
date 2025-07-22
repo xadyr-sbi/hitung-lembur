@@ -1,8 +1,6 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,10 +16,11 @@ interface OvertimeData {
   [key: string]: OvertimeDay
 }
 
-// Libur nasional format tanpa nol di depan
+// Format diperbaiki dengan 2 digit bulan dan tanggal
 const nationalHolidays2025 = [
-  '2025-1-1','2025-1-29','2025-3-31','2025-4-18','2025-5-1','2025-5-29','2025-6-1','2025-6-6',
-  '2025-6-30','2025-7-17','2025-8-17','2025-10-6','2025-12-25'
+  '2025-01-01', '2025-01-29', '2025-03-31', '2025-04-18', 
+  '2025-05-01', '2025-05-29', '2025-06-01', '2025-06-06',
+  '2025-06-30', '2025-07-17', '2025-08-17', '2025-10-06', '2025-12-25'
 ]
 
 export default function OvertimeCalendar() {
@@ -66,9 +65,10 @@ export default function OvertimeCalendar() {
   const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
   const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay()
 
-  // Cek libur nasional
+  // Cek libur nasional (format 2 digit)
   const isNationalHoliday = (year: number, month: number, date: number) => {
-    return nationalHolidays2025.includes(`${year}-${month + 1}-${date}`)
+    const formattedDate = `${year}-${(month + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`
+    return nationalHolidays2025.includes(formattedDate)
   }
 
   const calculateWorkExperienceAllowance = (years: number) => years > 0 ? 5000 + ((years - 1) * 10000) : 0
@@ -139,21 +139,7 @@ export default function OvertimeCalendar() {
     })
   }
 
-  const exportData = () => {
-    const target = document.getElementById('export-area')
-    if (!target) return
-    html2canvas(target).then(canvas => {
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-      const imgProps = pdf.getImageProperties(imgData)
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-      pdf.save('lembur.pdf')
-    })
-  }
-
-  // ClassName helper agar tidak error di Vercel/TypeScript
+  // ClassName helper
   const makeClassName = (...args: (string | false | null | undefined)[]) =>
     args.filter(Boolean).join(" ")
 
@@ -188,15 +174,16 @@ export default function OvertimeCalendar() {
               ? (overtimeDay.isHoliday
                   ? "bg-red-500 text-white"
                   : "bg-yellow-400")
-              : "bg-green-200",
+              : isRed
+                ? "bg-red-500 text-white"
+                : "bg-green-200",
             selectedDate === date && "ring-2 ring-blue-500"
           )}
         >
           <span className={makeClassName(
             "z-10",
-            isRed && "text-red-600 font-bold",
-            !isRed && "text-black",
-            isToday && "border border-blue-500 rounded-full px-2"
+            (overtimeDay?.isHoliday || isRed) ? "text-white" : "text-black",
+            isToday && "border-2 border-blue-500 rounded-full px-2 py-1"
           )}>{date}</span>
           {overtimeDay && (
             <div className="absolute bottom-1 right-1 text-xs">
@@ -219,25 +206,23 @@ export default function OvertimeCalendar() {
           </h1>
           <Button onClick={() => navigateMonth('next')}><ChevronRight /></Button>
         </div>
-        <Button onClick={exportData}>Export PDF</Button>
       </div>
 
-      {/* HEADER HARI */}
+      {/* HEADER HARI - Sabtu hitam, hanya Minggu merah */}
       <div className="grid grid-cols-7 bg-yellow-100">
         {dayNames.map((day, index) => (
           <div
             key={day}
             className={makeClassName(
               "p-3 text-center font-bold border",
-              index === 0 && "text-red-600",
-              index !== 0 && "text-black"
+              index === 0 ? "text-red-600" : "text-black"
             )}
           >{day}</div>
         ))}
       </div>
 
       {/* GRID KALENDER */}
-      <div id="export-area" className="grid grid-cols-7">
+      <div className="grid grid-cols-7">
         {renderCalendarDays()}
       </div>
 
@@ -256,13 +241,18 @@ export default function OvertimeCalendar() {
             type="number"
             step="0.5"
             min="0"
-            max="10"
+            max="24"
             value={overtimeHours}
             onChange={(e) => setOvertimeHours(e.target.value)}
             placeholder="Jam Lembur"
           />
           <Label className="flex items-center gap-2 mt-2">
-            <input type="checkbox" checked={isHoliday} onChange={(e) => setIsHoliday(e.target.checked)} /> Hari Libur
+            <input 
+              type="checkbox" 
+              checked={isHoliday} 
+              onChange={(e) => setIsHoliday(e.target.checked)} 
+              className="w-4 h-4"
+            /> Hari Libur
           </Label>
           <Button className="mt-2" onClick={handleSaveOvertime}>Simpan</Button>
         </div>
