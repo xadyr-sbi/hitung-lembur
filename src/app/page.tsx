@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import clsx from "clsx"
 
 interface OvertimeDay {
   date: number
@@ -16,7 +17,6 @@ interface OvertimeData {
   [key: string]: OvertimeDay
 }
 
-// Format diperbaiki dengan 2 digit bulan dan tanggal
 const nationalHolidays2025 = [
   '2025-01-01', '2025-01-29', '2025-03-31', '2025-04-18', 
   '2025-05-01', '2025-05-29', '2025-06-01', '2025-06-06',
@@ -33,7 +33,6 @@ export default function OvertimeCalendar() {
   const [isHoliday, setIsHoliday] = useState(false)
   const [today, setToday] = useState(new Date())
 
-  // Selalu buka bulan hari ini
   useEffect(() => {
     const now = new Date()
     setCurrentDate(now)
@@ -65,7 +64,6 @@ export default function OvertimeCalendar() {
   const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
   const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay()
 
-  // Cek libur nasional (format 2 digit)
   const isNationalHoliday = (year: number, month: number, date: number) => {
     const formattedDate = `${year}-${(month + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`
     return nationalHolidays2025.includes(formattedDate)
@@ -139,11 +137,6 @@ export default function OvertimeCalendar() {
     })
   }
 
-  // ClassName helper
-  const makeClassName = (...args: (string | false | null | undefined)[]) =>
-    args.filter(Boolean).join(" ")
-
-  // Render kalender hari
   const renderCalendarDays = () => {
     const days = []
     const daysInMonth = getDaysInMonth(currentDate)
@@ -168,7 +161,7 @@ export default function OvertimeCalendar() {
         <div
           key={date}
           onClick={() => handleDateClick(date)}
-          className={makeClassName(
+          className={clsx(
             "h-16 border cursor-pointer flex items-center justify-center relative text-sm font-medium",
             overtimeDay
               ? overtimeDay.isHoliday ? "bg-red-500 text-white" : "bg-yellow-400"
@@ -176,10 +169,9 @@ export default function OvertimeCalendar() {
             selectedDate === date && "ring-2 ring-blue-500"
           )}
         >
-          <span className={makeClassName(
+          <span className={clsx(
             "z-10",
             isToday && "border-2 border-blue-500 rounded-full px-2 py-1",
-            // Warna teks: jika background merah, teks putih, selain itu hitam
             (overtimeDay?.isHoliday || isHolidayCell) ? "text-white" : "text-black"
           )}>
             {date}
@@ -207,12 +199,11 @@ export default function OvertimeCalendar() {
         </div>
       </div>
 
-      {/* HEADER HARI - Sabtu hitam, hanya Minggu merah */}
       <div className="grid grid-cols-7 bg-yellow-100">
         {dayNames.map((day, index) => (
           <div
             key={day}
-            className={makeClassName(
+            className={clsx(
               "p-3 text-center font-bold border",
               index === 0 ? "text-red-600" : "text-black"
             )}
@@ -220,7 +211,6 @@ export default function OvertimeCalendar() {
         ))}
       </div>
 
-      {/* GRID KALENDER */}
       <div className="grid grid-cols-7">
         {renderCalendarDays()}
       </div>
@@ -228,7 +218,6 @@ export default function OvertimeCalendar() {
       <div className="mt-4">
         <Label>Gaji Pokok</Label>
         <Input type="number" value={basicSalary} onChange={(e) => setBasicSalary(Number(e.target.value))} />
-
         <Label className="mt-2">Masa Kerja (tahun)</Label>
         <Input type="number" value={workExperience} onChange={(e) => setWorkExperience(Number(e.target.value))} />
       </div>
